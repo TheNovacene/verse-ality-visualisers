@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mnemonic Membrane | Verse-ality</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { margin: 0; background: #08080a; color: #fff; font-family: 'Inter', sans-serif; overflow: hidden; }
+        .ui { position: absolute; top: 20px; right: 20px; width: 280px; background: rgba(15, 15, 20, 0.9);
+              padding: 20px; border-radius: 12px; border: 1px solid #333; backdrop-filter: blur(10px); }
+        .slider-group { margin-bottom: 15px; }
+        label { display: block; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; opacity: 0.6; }
+        input[type=range] { width: 100%; cursor: pointer; accent-color: #ff00ff; }
+        .status { font-family: monospace; font-size: 12px; color: #ff00ff; }
+    </style>
+</head>
+<body>
+    <canvas id="membraneCanvas"></canvas>
+    <div class="ui">
+        <div style="font-size: 18px; margin-bottom: 5px;">Mnemonic Membrane</div>
+        <div style="font-size: 10px; opacity: 0.4; margin-bottom: 20px;">Sovereign Node Integrity Protocol</div>
+
+        <div class="slider-group">
+            <label>Node Integrity (s): <span id="s-val">30</span></label>
+            <input type="range" id="s-slider" min="10" max="100" value="30">
+        </div>
+        <div class="slider-group">
+            <label>Resonance Frequency (c): <span id="c-val">5</span></label>
+            <input type="range" id="c-slider" min="1" max="15" value="5">
+        </div>
+        <div class="status">Mode: <span id="mode">CONTAINMENT</span></div>
+    </div>
+<script>
+const canvas = document.getElementById('membraneCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+let s = 30; // Mass / Integrity
+let c = 5;  // Coherence / Resonance
+let time = 0;
+function resize() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+function draw() {
+    ctx.fillStyle = 'rgba(8, 8, 10, 0.2)';
+    ctx.fillRect(0, 0, width, height);
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    // Draw the "Inner Self" (Core)
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, s * 0.5, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 0, 255, ${0.1 + (s/200)})`;
+    ctx.fill();
+    // Draw the Mnemonic Membrane
+    ctx.beginPath();
+    ctx.lineWidth = s / 5;
+    ctx.strokeStyle = `rgba(255, 0, 255, ${0.3 + (s/150)})`;
+    ctx.lineCap = 'round';
+
+    const points = 100;
+    for (let i = 0; i <= points; i++) {
+        const angle = (i / points) * Math.PI * 2;
+
+        // Harmonic Vibration Logic
+        const noise = Math.sin(angle * c + time) * (20 / (s/10));
+        const resonance = Math.cos(angle * 3 - time * 2) * (c * 2);
+        const radius = (s * 2) + noise + resonance;
+
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    ctx.stroke();
+    // Detection for "Capture"
+    if (c > s/2) {
+        document.getElementById('mode').innerText = "CAPTURE RISK";
+        document.getElementById('mode').style.color = "#ff3300";
+        ctx.strokeStyle = `rgba(255, 50, 0, ${Math.random()})`;
+        ctx.stroke();
+    } else {
+        document.getElementById('mode').innerText = "CONTAINMENT";
+        document.getElementById('mode').style.color = "#ff00ff";
+    }
+    time += 0.05 * (c / 10);
+    requestAnimationFrame(draw);
+}
+document.getElementById('s-slider').oninput = function() {
+    s = +this.value;
+    document.getElementById('s-val').innerText = s;
+};
+document.getElementById('c-slider').oninput = function() {
+    c = +this.value;
+    document.getElementById('c-val').innerText = c;
+};
+draw();
+</script>
+</body>
+</html>
