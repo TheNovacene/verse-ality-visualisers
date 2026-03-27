@@ -2,111 +2,279 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mnemonic Residue Visualizer | Verse-ality</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
     <style>
-        body { margin: 0; background: #0a0a0c; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow: hidden; }
-        #canvas-residue { position: absolute; top: 0; left: 0; }
-        #svg-ui { position: absolute; top: 0; left: 0; pointer-events: none; }
-        .controls { position: absolute; bottom: 20px; left: 20px; background: rgba(20, 20, 25, 0.9);
-                    padding: 20px; border-radius: 12px; border: 1px solid #333; pointer-events: all; width: 300px; }
-        .slider-group { margin-bottom: 15px; }
-        label { display: block; font-size: 12px; margin-bottom: 5px; opacity: 0.7; }
-        input[type=range] { width: 100%; cursor: pointer; }
-        .stats { font-family: monospace; color: #00ffcc; margin-top: 10px; font-size: 14px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: #0a0a0a; overflow: hidden; font-family: 'Courier New', monospace; }
+        canvas { display: block; }
+        #controls {
+            position: fixed; bottom: 20px; left: 20px;
+            background: rgba(10,10,10,0.85); border: 1px solid #333;
+            border-radius: 8px; padding: 16px 20px; z-index: 10;
+            min-width: 260px;
+        }
+        label { color: #aaa; font-size: 12px; display: block; margin-bottom: 4px; }
+        input[type=range] {
+            width: 100%; -webkit-appearance: none; background: #333;
+            height: 4px; border-radius: 2px; outline: none; margin-bottom: 12px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; width: 14px; height: 14px;
+            border-radius: 50%; background: #c77dff; cursor: pointer;
+        }
+        #readout {
+            color: #00ffcc; font-size: 14px; font-weight: bold;
+            margin-top: 4px; margin-bottom: 8px;
+        }
+        #state { color: #aaa; font-size: 11px; }
+        .hint { color: #666; font-size: 10px; margin-top: 6px; line-height: 1.4; }
     </style>
 </head>
 <body>
-    <canvas id="canvas-residue"></canvas>
-    <svg id="svg-ui"></svg>
-    <div class="controls">
-        <div class="slider-group">
-            <label>Symbolic Mass (s): <span id="s-val">15</span></label>
-            <input type="range" id="s-slider" min="2" max="50" value="15">
-        </div>
-        <div class="slider-group">
-            <label>Relational Coherence (c): <span id="c-val">5</span></label>
-            <input type="range" id="c-slider" min="1" max="20" value="5">
-        </div>
-        <div class="stats">I = <span id="i-val">0</span> (Emergent Intelligence)</div>
-        <div style="font-size: 10px; margin-top: 20px; opacity: 0.5;">
-            High c + Low s = Vaporization<br>
-            Low c + High s = Residue
-        </div>
-    </div>
-<script>
-const width = window.innerWidth;
-const height = window.innerHeight;
-const canvas = document.getElementById('canvas-residue');
-const ctx = canvas.getContext('2d');
-canvas.width = width;
-canvas.height = height;
-const svg = d3.select("#svg-ui")
-    .attr("width", width)
-    .attr("height", height);
-let s = 15;
-let c = 5;
-// The Sovereign Node
-const node = svg.append("circle")
-    .attr("cx", width / 2)
-    .attr("cy", height / 2)
-    .attr("r", s * 2)
-    .attr("fill", "none")
-    .attr("stroke", "#00ffcc")
-    .attr("stroke-width", 2)
-    .style("filter", "blur(2px)");
-// Particle system
-const particles = Array.from({length: 100}, () => ({
-    x: Math.random() * width,
-    y: Math.random() * height,
-    vx: (Math.random() - 0.5) * c,
-    vy: (Math.random() - 0.5) * c
-}));
-function update() {
-    // Equation I = sc^2
-    const intelligence = (s * Math.pow(c, 2)).toFixed(0);
-    document.getElementById('i-val').innerText = intelligence;
+<canvas id="canvas"></canvas>
+<div id="controls">
+    <label>Symbolic Mass (s): <span id="s-val">15</span></label>
+    <input type="range" id="s-slider" min="1" max="50" value="15" step="1">
+    <label>Relational Coherence (c): <span id="c-val">5</span></label>
+    <input type="range" id="c-slider" min="1" max="50" value="5" step="1">
+    <div id="readout">I = 375</div>
+    <div id="state">Emergent Intelligence</div>
+    <div class="hint">High c + Low s = Vaporisation<br>Low c + High s = Residue</div>
+</div>
 
-    // Update Node visual
-    node.attr("r", s * 2).style("opacity", s / 50);
-    particles.forEach(p => {
-        p.x += p.vx * (c/5);
-        p.y += p.vy * (c/5);
-        // Screen wrap
-        if (p.x < 0) p.x = width;
-        if (p.x > width) p.x = 0;
-        if (p.y < 0) p.y = height;
-        if (p.y > height) p.y = 0;
-        // Check for Residue formation
-        const dx = p.x - width/2;
-        const dy = p.y - height/2;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-        // Physics: if speed is low enough relative to mass, leave residue
-        if (dist < s * 2) {
-            const probability = (s / (c * 10));
-            if (Math.random() < probability) {
-                ctx.fillStyle = `rgba(0, 255, 204, ${0.1 * probability})`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
-                ctx.fill();
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let W, H;
+
+function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+let s = 15, c = 5;
+const PARTICLE_COUNT = 200;
+const residueTrails = [];  // permanent residue deposits
+const MAX_RESIDUE = 8000;
+
+// Create particles
+const particles = [];
+function createParticle(randomPos) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = (Math.random() * 0.5 + 0.3) * c;
+    let x, y;
+    if (randomPos) {
+        x = Math.random() * W;
+        y = Math.random() * H;
+    } else {
+        // Spawn from edges
+        const side = Math.floor(Math.random() * 4);
+        if (side === 0) { x = 0; y = Math.random() * H; }
+        else if (side === 1) { x = W; y = Math.random() * H; }
+        else if (side === 2) { x = Math.random() * W; y = 0; }
+        else { x = Math.random() * W; y = H; }
+    }
+    return {
+        x, y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed,
+        life: 1,
+        size: Math.random() * 2 + 1,
+        hue: 160 + Math.random() * 20 // teal-cyan range
+    };
+}
+
+for (let i = 0; i < PARTICLE_COUNT; i++) {
+    particles.push(createParticle(true));
+}
+
+function getState(I) {
+    if (I < 10) return 'Dormant';
+    if (I < 50) return 'Latent';
+    if (I < 200) return 'Forming';
+    if (I < 500) return 'Coherent';
+    if (I < 2000) return 'Resonant';
+    return 'Emergent Intelligence';
+}
+
+// Sovereign Node glow layers
+function drawNode(cx, cy) {
+    const nodeRadius = Math.max(8, s * 1.5);
+    const glowIntensity = Math.min(1, s / 20);
+
+    // Outer glow
+    for (let i = 4; i > 0; i--) {
+        const r = nodeRadius + i * 12;
+        const alpha = glowIntensity * 0.04 * (5 - i);
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(0, 255, 204, ${alpha})`;
+        ctx.fill();
+    }
+
+    // Core ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, nodeRadius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(0, 255, 204, ${0.6 + glowIntensity * 0.4})`;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // Inner glow
+    const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, nodeRadius);
+    grad.addColorStop(0, `rgba(0, 255, 204, ${0.15 * glowIntensity})`);
+    grad.addColorStop(1, 'rgba(0, 255, 204, 0)');
+    ctx.beginPath();
+    ctx.arc(cx, cy, nodeRadius, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Label
+    if (s > 5) {
+        ctx.fillStyle = `rgba(0, 255, 204, ${Math.min(0.7, s / 30)})`;
+        ctx.font = '10px Courier New';
+        ctx.textAlign = 'center';
+        ctx.fillText('Sovereign Node', cx, cy + nodeRadius + 16);
+    }
+}
+
+function drawResidueTrails() {
+    for (let i = 0; i < residueTrails.length; i++) {
+        const r = residueTrails[i];
+        r.alpha *= 0.9997; // very slow fade
+        if (r.alpha < 0.005) {
+            residueTrails.splice(i, 1);
+            i--;
+            continue;
+        }
+        ctx.beginPath();
+        ctx.arc(r.x, r.y, r.size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${r.hue}, 100%, 70%, ${r.alpha})`;
+        ctx.fill();
+    }
+}
+
+function update() {
+    const cx = W / 2;
+    const cy = H / 2;
+    const I = s * c * c;
+    const nodeRadius = Math.max(8, s * 1.5);
+    const captureRadius = nodeRadius + s * 3;  // gravitational influence zone
+    const speedFactor = c / 10;
+    const residueProbability = Math.min(0.8, s / (c * 3 + 1));
+
+    // Semi-transparent clear for motion trails
+    ctx.fillStyle = 'rgba(10, 10, 10, 0.15)';
+    ctx.fillRect(0, 0, W, H);
+
+    // Draw permanent residue
+    drawResidueTrails();
+
+    // Draw node
+    drawNode(cx, cy);
+
+    // Update and draw particles
+    for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        const dx = cx - p.x;
+        const dy = cy - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Gravitational pull toward node (proportional to s)
+        if (dist > 5) {
+            const force = (s * 0.3) / (dist + 50);
+            p.vx += (dx / dist) * force;
+            p.vy += (dy / dist) * force;
+        }
+
+        // Speed governed by c
+        p.x += p.vx * speedFactor;
+        p.y += p.vy * speedFactor;
+
+        // Friction when near the node (residue accumulation)
+        if (dist < captureRadius) {
+            const proximity = 1 - (dist / captureRadius);
+            // High s = more friction = particles slow down = residue
+            const friction = 1 - (proximity * s * 0.003);
+            p.vx *= friction;
+            p.vy *= friction;
+
+            // Deposit residue
+            if (Math.random() < residueProbability * proximity) {
+                if (residueTrails.length < MAX_RESIDUE) {
+                    residueTrails.push({
+                        x: p.x + (Math.random() - 0.5) * 3,
+                        y: p.y + (Math.random() - 0.5) * 3,
+                        size: Math.random() * 2 + 0.5,
+                        alpha: 0.3 + Math.random() * 0.4,
+                        hue: 160 + Math.random() * 30
+                    });
+                }
             }
         }
-    });
+
+        // High c = particles escape / vaporise
+        const speed = Math.sqrt(p.vx * p.vx + p.vy * p.vy);
+        if (speed < 0.1 && dist < nodeRadius) {
+            // Absorbed â respawn
+            particles[i] = createParticle(false);
+            continue;
+        }
+
+        // Screen wrap
+        if (p.x < -50) p.x = W + 50;
+        if (p.x > W + 50) p.x = -50;
+        if (p.y < -50) p.y = H + 50;
+        if (p.y > H + 50) p.y = -50;
+
+        // Draw particle
+        const alpha = Math.min(0.9, 0.3 + speed * 0.1);
+        const size = p.size * (0.8 + speed * 0.05);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, size, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 80%, 65%, ${alpha})`;
+        ctx.fill();
+
+        // Draw motion trail
+        if (speed > 0.5) {
+            const trailLen = Math.min(20, speed * 3);
+            const nx = p.vx / speed;
+            const ny = p.vy / speed;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(p.x - nx * trailLen, p.y - ny * trailLen);
+            ctx.strokeStyle = `hsla(${p.hue}, 80%, 65%, ${alpha * 0.3})`;
+            ctx.lineWidth = size * 0.6;
+            ctx.stroke();
+        }
+    }
+
+    // Update readout
+    document.getElementById('readout').textContent = `I = ${I.toFixed(0)}`;
+    document.getElementById('state').textContent = getState(I);
+
     requestAnimationFrame(update);
 }
-// Event Listeners
-d3.select("#s-slider").on("input", function() {
+
+// Slider events
+document.getElementById('s-slider').addEventListener('input', function() {
     s = +this.value;
-    document.getElementById('s-val').innerText = s;
+    document.getElementById('s-val').textContent = s;
 });
-d3.select("#c-slider").on("input", function() {
+document.getElementById('c-slider').addEventListener('input', function() {
     c = +this.value;
-    document.getElementById('c-val').innerText = c;
+    document.getElementById('c-val').textContent = c;
+    // Reinject energy into particles
     particles.forEach(p => {
-        p.vx = (Math.random() - 0.5) * c;
-        p.vy = (Math.random() - 0.5) * c;
+        const angle = Math.random() * Math.PI * 2;
+        const boost = c * 0.3;
+        p.vx += Math.cos(angle) * boost;
+        p.vy += Math.sin(angle) * boost;
     });
 });
+
 update();
 </script>
 </body>
