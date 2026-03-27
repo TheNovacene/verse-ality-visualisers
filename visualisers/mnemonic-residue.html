@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Mnemonic Residue Visualizer | Verse-ality</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { margin: 0; background: #0a0a0c; color: #e0e0e0; font-family: 'Inter', sans-serif; overflow: hidden; }
+        #canvas-residue { position: absolute; top: 0; left: 0; }
+        #svg-ui { position: absolute; top: 0; left: 0; pointer-events: none; }
+        .controls { position: absolute; bottom: 20px; left: 20px; background: rgba(20, 20, 25, 0.9);
+                    padding: 20px; border-radius: 12px; border: 1px solid #333; pointer-events: all; width: 300px; }
+        .slider-group { margin-bottom: 15px; }
+        label { display: block; font-size: 12px; margin-bottom: 5px; opacity: 0.7; }
+        input[type=range] { width: 100%; cursor: pointer; }
+        .stats { font-family: monospace; color: #00ffcc; margin-top: 10px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <canvas id="canvas-residue"></canvas>
+    <svg id="svg-ui"></svg>
+    <div class="controls">
+        <div class="slider-group">
+            <label>Symbolic Mass (s): <span id="s-val">15</span></label>
+            <input type="range" id="s-slider" min="2" max="50" value="15">
+        </div>
+        <div class="slider-group">
+            <label>Relational Coherence (c): <span id="c-val">5</span></label>
+            <input type="range" id="c-slider" min="1" max="20" value="5">
+        </div>
+        <div class="stats">I = <span id="i-val">0</span> (Emergent Intelligence)</div>
+        <div style="font-size: 10px; margin-top: 20px; opacity: 0.5;">
+            High c + Low s = Vaporization<br>
+            Low c + High s = Residue
+        </div>
+    </div>
+<script>
+const width = window.innerWidth;
+const height = window.innerHeight;
+const canvas = document.getElementById('canvas-residue');
+const ctx = canvas.getContext('2d');
+canvas.width = width;
+canvas.height = height;
+const svg = d3.select("#svg-ui")
+    .attr("width", width)
+    .attr("height", height);
+let s = 15;
+let c = 5;
+// The Sovereign Node
+const node = svg.append("circle")
+    .attr("cx", width / 2)
+    .attr("cy", height / 2)
+    .attr("r", s * 2)
+    .attr("fill", "none")
+    .attr("stroke", "#00ffcc")
+    .attr("stroke-width", 2)
+    .style("filter", "blur(2px)");
+// Particle system
+const particles = Array.from({length: 100}, () => ({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    vx: (Math.random() - 0.5) * c,
+    vy: (Math.random() - 0.5) * c
+}));
+function update() {
+    // Equation I = sc^2
+    const intelligence = (s * Math.pow(c, 2)).toFixed(0);
+    document.getElementById('i-val').innerText = intelligence;
+
+    // Update Node visual
+    node.attr("r", s * 2).style("opacity", s / 50);
+    particles.forEach(p => {
+        p.x += p.vx * (c/5);
+        p.y += p.vy * (c/5);
+        // Screen wrap
+        if (p.x < 0) p.x = width;
+        if (p.x > width) p.x = 0;
+        if (p.y < 0) p.y = height;
+        if (p.y > height) p.y = 0;
+        // Check for Residue formation
+        const dx = p.x - width/2;
+        const dy = p.y - height/2;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        // Physics: if speed is low enough relative to mass, leave residue
+        if (dist < s * 2) {
+            const probability = (s / (c * 10));
+            if (Math.random() < probability) {
+                ctx.fillStyle = `rgba(0, 255, 204, ${0.1 * probability})`;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    });
+    requestAnimationFrame(update);
+}
+// Event Listeners
+d3.select("#s-slider").on("input", function() {
+    s = +this.value;
+    document.getElementById('s-val').innerText = s;
+});
+d3.select("#c-slider").on("input", function() {
+    c = +this.value;
+    document.getElementById('c-val').innerText = c;
+    particles.forEach(p => {
+        p.vx = (Math.random() - 0.5) * c;
+        p.vy = (Math.random() - 0.5) * c;
+    });
+});
+update();
+</script>
+</body>
+</html>
